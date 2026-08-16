@@ -8,9 +8,6 @@
 
 int cursor_pos = 0;
 char *fb = (char *)0xB8000;
-/* =========================================================
- * WRITE CELL
- * ========================================================= */
 
 void fb_write_cell(
     unsigned int i,
@@ -26,21 +23,10 @@ void fb_write_cell(
         (fg & 0x0F);
 }
 
-
-/* =========================================================
- * SCROLL SCREEN
- * ========================================================= */
-
 static void fb_scroll(void)
 {
     unsigned int row;
     unsigned int col;
-
-
-    /*
-     * Сдвигаем строки 1..24
-     * на позиции 0..23.
-     */
 
     for (row = 1; row < FB_HEIGHT; row++) {
 
@@ -60,11 +46,6 @@ static void fb_scroll(void)
         }
     }
 
-
-    /*
-     * Очищаем последнюю строку.
-     */
-
     for (col = 0; col < FB_WIDTH; col++) {
 
         unsigned int index =
@@ -78,20 +59,9 @@ static void fb_scroll(void)
         );
     }
 
-
-    /*
-     * Курсор теперь находится
-     * в начале последней строки.
-     */
-
     cursor_pos =
         (FB_HEIGHT - 1) * FB_WIDTH;
 }
-
-
-/* =========================================================
- * ENSURE CURSOR IS ON SCREEN
- * ========================================================= */
 
 static void fb_check_cursor(void)
 {
@@ -99,11 +69,6 @@ static void fb_check_cursor(void)
         fb_scroll();
     }
 }
-
-
-/* =========================================================
- * MOVE HARDWARE CURSOR
- * ========================================================= */
 
 void fb_move_cursor(unsigned short pos)
 {
@@ -138,11 +103,6 @@ void fb_move_cursor(unsigned short pos)
     );
 }
 
-
-/* =========================================================
- * WRITE STRING
- * ========================================================= */
-
 void fb_write_string(
     unsigned int start_index,
     char *str,
@@ -167,11 +127,6 @@ void fb_write_string(
     }
 }
 
-
-/* =========================================================
- * PRINT
- * ========================================================= */
-
 void fb_print(
     char *str,
     unsigned char fg,
@@ -183,18 +138,7 @@ void fb_print(
 
     while (str[i] != '\0') {
 
-        /*
-         * Если дошли до конца экрана,
-         * прокручиваем его.
-         */
-
         fb_check_cursor();
-
-
-        /*
-         * Пишем символ.
-         */
-
         fb_write_cell(
             cursor_pos * 2,
             str[i],
@@ -202,82 +146,32 @@ void fb_print(
             bg
         );
 
-
-        /*
-         * Следующая позиция.
-         */
-
         cursor_pos++;
 
         i++;
     }
-
-
-    /*
-     * Если после печати оказались
-     * за пределами экрана — scroll.
-     */
-
     fb_check_cursor();
-
-
-    /*
-     * Обновляем аппаратный курсор.
-     */
 
     fb_move_cursor(cursor_pos);
 }
-
-
-/* =========================================================
- * PRINTLN
- * ========================================================= */
-
 void fb_println(
     char *str,
     unsigned char fg,
     unsigned char bg
 )
 {
-    /*
-     * Печатаем текст.
-     */
-
     fb_print(
         str,
         fg,
         bg
     );
-
-
-    /*
-     * Определяем текущую строку.
-     */
-
     unsigned int current_row =
         cursor_pos / FB_WIDTH;
-
-
-    /*
-     * Переходим на начало
-     * следующей строки.
-     */
 
     cursor_pos =
         (current_row + 1) * FB_WIDTH;
 
-
-    /*
-     * Если следующая строка уже
-     * за экраном — прокручиваем.
-     */
-
     fb_check_cursor();
-
-
-    /*
-     * Обновляем аппаратный курсор.
-     */
 
     fb_move_cursor(cursor_pos);
 }
