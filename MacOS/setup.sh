@@ -7,21 +7,12 @@ echo "        AbibaOS macOS setup v1.0"
 echo "======================================"
 echo
 
-# ---------------------------------------------------------
-# Check macOS
-# ---------------------------------------------------------
-
 if [[ "$(uname)" != "Darwin" ]]; then
     echo "[ERROR] This script is for macOS only."
     exit 1
 fi
 
 echo "[OK] macOS detected"
-
-
-# ---------------------------------------------------------
-# Check Homebrew
-# ---------------------------------------------------------
 
 echo
 echo "[*] Checking Homebrew..."
@@ -41,21 +32,11 @@ fi
 
 echo "[OK] Homebrew"
 
-
-# ---------------------------------------------------------
-# Install dependencies
-# ---------------------------------------------------------
-
 echo
 echo "[*] Installing dependencies..."
 
 brew install nasm
 brew install qemu
-
-
-# ---------------------------------------------------------
-# Check compiler
-# ---------------------------------------------------------
 
 echo
 echo "[*] Checking compiler..."
@@ -72,22 +53,12 @@ else
     exit 1
 fi
 
-
-# ---------------------------------------------------------
-# Check Make
-# ---------------------------------------------------------
-
 if command -v make >/dev/null 2>&1; then
     echo "[OK] make"
 else
     echo "[ERROR] make was not found."
     exit 1
 fi
-
-
-# ---------------------------------------------------------
-# Check NASM
-# ---------------------------------------------------------
 
 if command -v nasm >/dev/null 2>&1; then
     echo "[OK] nasm"
@@ -96,22 +67,12 @@ else
     exit 1
 fi
 
-
-# ---------------------------------------------------------
-# Check QEMU
-# ---------------------------------------------------------
-
 if command -v qemu-system-i386 >/dev/null 2>&1; then
     echo "[OK] qemu-system-i386"
 else
     echo "[ERROR] qemu-system-i386 was not found."
     exit 1
 fi
-
-
-# ---------------------------------------------------------
-# Finish
-# ---------------------------------------------------------
 
 echo
 echo "======================================"
