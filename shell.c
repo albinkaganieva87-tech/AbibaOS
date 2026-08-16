@@ -8,33 +8,16 @@
 
 #define HISTORY_SIZE 10
 
-/*
- * Специальные значения, которые getc()
- * возвращает для стрелок.
- *
- * Они не являются обычными ASCII-символами.
- */
 #define KEY_UP    0x11
 #define KEY_DOWN  0x12
 
 
 char *path = "home/user/shell>";
 
-
-/* =========================================================
- * COMMAND HISTORY
- * ========================================================= */
-
 static char history[HISTORY_SIZE][MAX_INPUT_LENGTH];
 
 static unsigned int history_count = 0;
 
-/*
- * Текущая позиция при перемещении по истории.
- *
- * history_count означает "пустая строка после последней
- * команды".
- */
 static unsigned int history_position = 0;
 
 /*
@@ -42,11 +25,6 @@ static unsigned int history_position = 0;
  * перед первым нажатием стрелки вверх.
  */
 static char history_temp[MAX_INPUT_LENGTH];
-
-
-/* =========================================================
- * KEYBOARD MAP
- * ========================================================= */
 
 static const char keyboard_map[128] = {
     0,
@@ -126,11 +104,6 @@ static const char keyboard_map[128] = {
     ' '
 };
 
-
-/* =========================================================
- * STRING COPY
- * ========================================================= */
-
 static void strcpy_local(char *destination, const char *source)
 {
     unsigned int i = 0;
@@ -142,14 +115,6 @@ static void strcpy_local(char *destination, const char *source)
 
     destination[i] = '\0';
 }
-
-
-/* =========================================================
- * STRING COMPARE
- *
- * 0 = одинаковые
- * 1 = разные
- * ========================================================= */
 
 static int strcmp_local(const char *a, const char *b)
 {
@@ -170,11 +135,6 @@ static int strcmp_local(const char *a, const char *b)
 
     return 0;
 }
-
-
-/* =========================================================
- * KEYBOARD SCAN CODE
- * ========================================================= */
 
 static unsigned char keyboard_read_scancode(void)
 {
@@ -198,17 +158,6 @@ static unsigned char keyboard_read_scancode(void)
 }
 
 
-/* =========================================================
- * GETC
- *
- * Получить один символ.
- *
- * Дополнительно:
- *
- * KEY_UP   -> стрелка вверх
- * KEY_DOWN -> стрелка вниз
- * ========================================================= */
-
 char getc(void)
 {
     unsigned char scancode;
@@ -218,77 +167,36 @@ char getc(void)
 
         scancode = keyboard_read_scancode();
 
-        /*
-         * Extended scan code.
-         *
-         * Стрелки идут как:
-         *
-         * E0 48 = UP
-         * E0 50 = DOWN
-         */
-
         if (scancode == 0xE0) {
 
             extended = keyboard_read_scancode();
-
-            /*
-             * UP
-             */
 
             if (extended == 0x48) {
                 return KEY_UP;
             }
 
-            /*
-             * DOWN
-             */
 
             if (extended == 0x50) {
                 return KEY_DOWN;
             }
 
-            /*
-             * Другие extended keys пока игнорируем.
-             */
-
             continue;
         }
-
-
-        /*
-         * Отпускание клавиши.
-         */
 
         if (scancode & 0x80) {
             continue;
         }
 
 
-        /*
-         * Неизвестный scan code.
-         */
-
         if (scancode >= 128) {
             continue;
         }
-
-
-        /*
-         * Преобразуем scan code в ASCII.
-         */
 
         if (keyboard_map[scancode] != 0) {
             return keyboard_map[scancode];
         }
     }
 }
-
-
-/* =========================================================
- * CLEAR CURRENT INPUT
- *
- * Удаляет текущую строку ввода с экрана.
- * ========================================================= */
 
 static void clear_input(char *buffer)
 {
@@ -298,9 +206,6 @@ static void clear_input(char *buffer)
         length++;
     }
 
-    /*
-     * Стираем все символы.
-     */
 
     while (length > 0) {
 
@@ -321,28 +226,13 @@ static void clear_input(char *buffer)
     fb_move_cursor(cursor_pos);
 }
 
-
-/* =========================================================
- * HISTORY SAVE
- * ========================================================= */
-
 static void history_add(const char *command)
 {
     unsigned int i;
 
-    /*
-     * Пустые команды в историю не добавляем.
-     */
-
     if (command[0] == '\0') {
         return;
     }
-
-
-    /*
-     * Если история заполнена,
-     * сдвигаем старые команды вверх.
-     */
 
     if (history_count >= HISTORY_SIZE) {
 
@@ -355,11 +245,6 @@ static void history_add(const char *command)
 
         history_count = HISTORY_SIZE - 1;
     }
-
-
-    /*
-     * Добавляем новую команду в конец.
-     */
 
     strcpy_local(
         history[history_count],
@@ -375,11 +260,6 @@ static void history_add(const char *command)
 
     history_position = history_count;
 }
-
-
-/* =========================================================
- * GET HISTORY COMMAND
- * ========================================================= */
 
 static void history_load(
     char *buffer,
@@ -400,32 +280,11 @@ static void history_load(
     );
 }
 
-
-/* =========================================================
- * GETS
- *
- * ENTER:
- *     завершить строку
- *
- * BACKSPACE:
- *     удалить символ
- *
- * UP:
- *     предыдущая команда
- *
- * DOWN:
- *     следующая команда
- * ========================================================= */
-
 void gets(char *buffer)
 {
     unsigned int index = 0;
 
     char c;
-
-    /*
-     * Новый ввод начинается с пустого буфера.
-     */
 
     buffer[0] = '\0';
 
@@ -437,26 +296,11 @@ void gets(char *buffer)
 
         c = getc();
 
-
-        /* -------------------------------------------------
-         * ENTER
-         * ------------------------------------------------- */
-
         if (c == '\n') {
 
             buffer[index] = '\0';
 
-
-            /*
-             * Добавляем команду в историю.
-             */
-
             history_add(buffer);
-
-
-            /*
-             * Переход на следующую строку.
-             */
 
             fb_println(
                 "",
@@ -468,10 +312,6 @@ void gets(char *buffer)
         }
 
 
-        /* -------------------------------------------------
-         * BACKSPACE
-         * ------------------------------------------------- */
-
         if (c == '\b') {
 
             if (index > 0) {
@@ -481,11 +321,6 @@ void gets(char *buffer)
                 buffer[index] = '\0';
 
                 cursor_pos--;
-
-
-                /*
-                 * Стираем символ.
-                 */
 
                 fb_write_cell(
                     cursor_pos * 2,
@@ -501,27 +336,11 @@ void gets(char *buffer)
             continue;
         }
 
-
-        /* -------------------------------------------------
-         * UP
-         * ------------------------------------------------- */
-
         if (c == KEY_UP) {
-
-            /*
-             * История пуста.
-             */
 
             if (history_count == 0) {
                 continue;
             }
-
-
-            /*
-             * Первый UP.
-             *
-             * Сохраняем текущую строку пользователя.
-             */
 
             if (history_position == history_count) {
 
@@ -530,11 +349,6 @@ void gets(char *buffer)
                     buffer
                 );
             }
-
-
-            /*
-             * Идём к предыдущей команде.
-             */
 
             if (history_position > 0) {
 
@@ -559,17 +373,7 @@ void gets(char *buffer)
             continue;
         }
 
-
-        /* -------------------------------------------------
-         * DOWN
-         * ------------------------------------------------- */
-
         if (c == KEY_DOWN) {
-
-            /*
-             * Если мы уже внизу истории,
-             * ничего делать не надо.
-             */
 
             if (history_position >= history_count) {
                 continue;
@@ -577,13 +381,6 @@ void gets(char *buffer)
 
 
             history_position++;
-
-
-            /*
-             * Если дошли после последней команды,
-             * восстанавливаем строку, которая была
-             * до нажатия UP.
-             */
 
             if (history_position == history_count) {
 
@@ -603,20 +400,11 @@ void gets(char *buffer)
 
             else {
 
-                /*
-                 * Загружаем следующую команду.
-                 */
-
                 history_load(
                     buffer,
                     history_position
                 );
             }
-
-
-            /*
-             * Пересчитываем длину строки.
-             */
 
             index = 0;
 
@@ -626,25 +414,13 @@ void gets(char *buffer)
 
             continue;
         }
-
-
-        /* -------------------------------------------------
-         * Обычный символ
-         * ------------------------------------------------- */
-
-        if (index < MAX_INPUT_LENGTH - 1) {
+  if (index < MAX_INPUT_LENGTH - 1) {
 
             buffer[index] = c;
 
             index++;
 
             buffer[index] = '\0';
-
-
-            /*
-             * Временная строка из одного символа.
-             */
-
             char text[2];
 
             text[0] = c;
@@ -663,11 +439,6 @@ void gets(char *buffer)
         }
     }
 }
-
-
-/* =========================================================
- * IDENTIFY COMMAND
- * ========================================================= */
 
 static CommandType identify_command(char *command)
 {
@@ -694,27 +465,6 @@ static CommandType identify_command(char *command)
     return COMMAND_UNKNOWN;
 }
 
-
-/* =========================================================
- * PARSE COMMAND
- *
- * Например:
- *
- * echo hello world
- *
- * input:
- *     echo hello world
- *
- * command:
- *     echo
- *
- * args[0]:
- *     hello
- *
- * args[1]:
- *     world
- * ========================================================= */
-
 static CommandType parse_command(
     char *input,
     char *args[MAX_ARGS_COUNT]
@@ -725,28 +475,14 @@ static CommandType parse_command(
 
     CommandType type;
 
-
-    /*
-     * Пропускаем начальные пробелы.
-     */
-
     while (input[i] == ' ') {
         i++;
     }
-
-
-    /*
-     * Пустая команда.
-     */
 
     if (input[i] == '\0') {
         return COMMAND_UNKNOWN;
     }
 
-
-    /*
-     * Ищем конец имени команды.
-     */
 
     while (
         input[i] != ' ' &&
@@ -755,11 +491,6 @@ static CommandType parse_command(
         i++;
     }
 
-
-    /*
-     * Отделяем команду от аргументов.
-     */
-
     if (input[i] == ' ') {
 
         input[i] = '\0';
@@ -767,66 +498,32 @@ static CommandType parse_command(
         i++;
     }
 
-
-    /*
-     * Определяем команду.
-     */
-
     type = identify_command(input);
-
-
-    /*
-     * Разбираем аргументы.
-     */
-
+    
     while (
         input[i] != '\0' &&
         arg_count < MAX_ARGS_COUNT
     ) {
 
-        /*
-         * Пропускаем пробелы.
-         */
 
         while (input[i] == ' ') {
             i++;
         }
 
 
-        /*
-         * Конец строки.
-
-         */
-
         if (input[i] == '\0') {
             break;
         }
 
-
-        /*
-         * Запоминаем начало аргумента.
-         */
-
         args[arg_count] = &input[i];
 
         arg_count++;
-
-
-        /*
-         * Ищем конец аргумента.
-         */
-
         while (
             input[i] != ' ' &&
             input[i] != '\0'
         ) {
             i++;
         }
-
-
-        /*
-         * Завершаем аргумент.
-         */
 
         if (input[i] == ' ') {
 
@@ -835,11 +532,6 @@ static CommandType parse_command(
             i++;
         }
     }
-
-
-    /*
-     * Остальные аргументы = NULL.
-     */
 
     while (arg_count < MAX_ARGS_COUNT) {
 
@@ -851,11 +543,6 @@ static CommandType parse_command(
 
     return type;
 }
-
-
-/* =========================================================
- * CLEAR SCREEN
- * ========================================================= */
 
 static void clear_screen(void)
 {
@@ -876,22 +563,12 @@ static void clear_screen(void)
     fb_move_cursor(cursor_pos);
 }
 
-
-/* =========================================================
- * PARSE COMMAND EXECUTION
- * ========================================================= */
-
 void ParseCommand(
     CommandType type,
     char *args[MAX_ARGS_COUNT]
 )
 {
     switch (type) {
-
-
-        /* -------------------------------------------------
-         * HELP
-         * ------------------------------------------------- */
 
         case HELP:
 
@@ -932,12 +609,6 @@ void ParseCommand(
             );
 
             break;
-
-
-        /* -------------------------------------------------
-         * ECHO
-         * ------------------------------------------------- */
-
         case ECHO:
 
             if (args[0] == 0) {
@@ -984,21 +655,11 @@ void ParseCommand(
 
             break;
 
-
-        /* -------------------------------------------------
-         * CLEAR
-         * ------------------------------------------------- */
-
         case CLEAR:
 
             clear_screen();
 
             break;
-
-
-        /* -------------------------------------------------
-         * REBOOT
-         * ------------------------------------------------- */
 
         case REBOOT:
 
@@ -1008,30 +669,15 @@ void ParseCommand(
                 FB_BLACK
             );
 
-
-            /*
-             * Ждём освобождения input buffer.
-             */
-
             while (inb(0x64) & 0x02) {
             }
-
-
-            /*
-             * Reset через PS/2 controller.
-             */
 
             outb(
                 0x64,
                 0xFE
             );
 
-
-            /*
-             * Если reset не произошёл.
-             */
-
-            while (1) {
+         while (1) {
 
                 __asm__ volatile (
                     "cli; hlt"
@@ -1040,11 +686,6 @@ void ParseCommand(
 
             break;
 
-
-        /* -------------------------------------------------
-         * SHUTDOWN
-         * ------------------------------------------------- */
-
         case SHUTDOWN:
 
             fb_println(
@@ -1052,11 +693,6 @@ void ParseCommand(
                 FB_RED,
                 FB_BLACK
             );
-
-
-            /*
-             * QEMU / Bochs.
-             */
 
             outw(
                 0x604,
@@ -1068,11 +704,6 @@ void ParseCommand(
                 0x2000
             );
 
-
-            /*
-             * Если выключение не произошло.
-             */
-
             while (1) {
 
                 __asm__ volatile (
@@ -1082,17 +713,7 @@ void ParseCommand(
 
             break;
 
-
-        /* -------------------------------------------------
-         * UNKNOWN
-         * ------------------------------------------------- */
-
         case COMMAND_UNKNOWN:
-
-            /*
-             * Пустая команда просто возвращает prompt.
-             */
-
             break;
 
 
@@ -1108,11 +729,6 @@ void ParseCommand(
     }
 }
 
-
-/* =========================================================
- * SHELL PROCESS
- * ========================================================= */
-
 void ShellProcess(void)
 {
     char command[MAX_INPUT_LENGTH];
@@ -1122,38 +738,18 @@ void ShellProcess(void)
 
     while (1) {
 
-        /*
-         * Prompt.
-         */
-
         fb_print(
             path,
             FB_LIGHT_BLUE,
             FB_BLACK
         );
 
-
-        /*
-         * Получаем команду.
-         */
-
         gets(command);
-
-
-        /*
-         * Разбираем команду.
-
-         */
 
         CommandType type = parse_command(
             command,
             args
         );
-
-
-        /*
-         * Выполняем команду.
-         */
 
         ParseCommand(
             type,
